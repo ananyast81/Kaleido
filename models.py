@@ -1,6 +1,6 @@
-# Describing what we expect the extension to send us (the article the user is viewing)
 from pydantic import BaseModel
 
+# Describing what we expect the extension to send us (the article the user is viewing)
 class ArticleIn(BaseModel):
     url: str
     title: str
@@ -12,6 +12,7 @@ class RelatedArticle(BaseModel):
     url: str
     source: str
     bias: str | None = None  # None is default
+    confidence: float | None = None
 
 # Wrapper model
 class RelatedArticlesOut(BaseModel):
