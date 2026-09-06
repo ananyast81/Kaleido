@@ -10,7 +10,7 @@ pipe = pipeline(
 LABEL_MAP = {"LABEL_0": "left", "LABEL_1": "right", "LABEL_2": "right"}
 
 def classify_bias(text: str) -> tuple[str, float]:
-    result = pipe(text)
-    label = LABEL_MAP[result]
+    result = pipe(text, truncation=True)[0]
+    label = LABEL_MAP[result["label"]]
     confidence = result["score"]
     return label, confidence

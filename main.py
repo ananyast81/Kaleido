@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from models import ArticleIn, RelatedArticle, RelatedArticlesOut
 from services.bias_lookup import get_outlet_bias
 from services.contrast_selector import select_contrasting
+from services.bias_classifier import classify_bias
 
 app = FastAPI()
 
@@ -28,7 +29,8 @@ async def get_related_articles(article: ArticleIn):
     ]
     for a in fake_results:
         a.bias = get_outlet_bias(a.url)
-    curr_bias = get_outlet_bias(article.url)
+
+    curr_bias, curr_confidence = classify_bias(f"{article.title}. {article.description}")
 
     results = select_contrasting(curr_bias=curr_bias, related_articles=fake_results)
     return RelatedArticlesOut(related=results)
