@@ -39,6 +39,21 @@ function isLikelyArticle() {
   return false;
 }
 
+function extractArticleText() {
+  const container =
+    document.querySelector("article") ||
+    document.querySelector("main");
+
+  if (!container) return "";
+
+  return container.innerText
+    .replace(/\r/g, "")
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim()
+    .slice(0, 50000);
+}
+
 function extractArticleMeta() {
   const title =
     document.querySelector('meta[property="og:title"]')?.content ||
@@ -48,17 +63,42 @@ function extractArticleMeta() {
     document.querySelector('meta[property="og:description"]')?.content ||
     document.querySelector('meta[name="description"]')?.content ||
     '';
+  
+  const publisher =
+    document.querySelector('meta[property="og:site_name"]')?.content ||
+    null;
 
+  const publishedAt =
+    document.querySelector(
+      'meta[property="article:published_time"]'
+    )?.content ||
+    document.querySelector('time[datetime]')?.getAttribute('datetime') ||
+    null;  
   return {
     url: window.location.href,
     title,
     description,
+    content: extractArticleText(),
+    published_at: publishedAt,
+    publisher: publisher
   };
-}
+  };
+
 
 // Entry point: only do the extraction work if this actually looks like an article.
 if (isLikelyArticle()) {
   const meta = extractArticleMeta();
-  console.log('[Kaleido] Article detected:', meta); // helpful while testing — remove later
-  chrome.runtime.sendMessage({ type: 'ARTICLE_DETECTED', payload: meta });
+
+  console.log('[Kaleido] Article detected:', {
+    url: meta.url,
+    title: meta.title,
+    publisher: meta.publisher,
+    published_at: meta.published_at,
+    contentLength: meta.content.length
+  });
+
+  chrome.runtime.sendMessage({
+    type: 'ARTICLE_DETECTED',
+    payload: meta
+  });
 }

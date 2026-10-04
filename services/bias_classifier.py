@@ -7,7 +7,7 @@ pipe = pipeline(
     tokenizer="launch/POLITICS"
 )
 
-LABEL_MAP = {"LABEL_0": "left", "LABEL_1": "right", "LABEL_2": "right"}
+LABEL_MAP = {"LABEL_0": "left", "LABEL_1": "center", "LABEL_2": "right"}
 
 def classify_bias(text: str) -> tuple[str, float]:
     result = pipe(text, truncation=True)[0]
