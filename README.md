@@ -75,6 +75,12 @@ classified perspective.
 - ✅ Semantic retrieval and URL deduplication (`services/retrieval.py`)
 - ✅ Focused persistence/provider/retrieval tests
 
+The default MVP path uses lightweight local bias heuristics and deterministic
+hash embeddings, so opening an article does not require downloading or loading
+large ML models. To opt into the existing Hugging Face models for experiments,
+set `KALEIDO_ENABLE_BIAS_MODEL=1` and/or `KALEIDO_ENABLE_EMBEDDING_MODEL=1`
+before starting the backend.
+
 ### Planned
 
 - 🔲 Real live-news retrieval

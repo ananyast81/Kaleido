@@ -1,4 +1,6 @@
 from functools import lru_cache
+import hashlib
+import os
 
 import numpy as np
 
@@ -51,15 +53,32 @@ def create_embeddings(
             "Cannot create an embedding for empty text."
         )
 
-    model = get_embedding_model()
-
-    embeddings = model.encode(
-        cleaned_texts,
-        batch_size=EMBEDDING_BATCH_SIZE,
-        show_progress_bar=False,
-        convert_to_numpy=True,
-        normalize_embeddings=True,
-    )
+    if os.getenv("KALEIDO_ENABLE_EMBEDDING_MODEL", "").lower() in {"1", "true", "yes"}:
+        model = get_embedding_model()
+        embeddings = model.encode(
+            cleaned_texts,
+            batch_size=EMBEDDING_BATCH_SIZE,
+            show_progress_bar=False,
+            convert_to_numpy=True,
+            normalize_embeddings=True,
+        )
+    else:
+        embeddings = np.zeros(
+            (len(cleaned_texts), EMBEDDING_DIMENSION),
+            dtype=np.float32,
+        )
+        for row, text in enumerate(cleaned_texts):
+            for token in text.casefold().split():
+                digest = hashlib.sha256(token.encode("utf-8")).digest()
+                index = int.from_bytes(digest[:4], "big") % EMBEDDING_DIMENSION
+                embeddings[row, index] += 1.0
+        norms = np.linalg.norm(embeddings, axis=1, keepdims=True)
+        embeddings = np.divide(
+            embeddings,
+            norms,
+            out=np.zeros_like(embeddings),
+            where=norms != 0,
+        )
 
     embeddings = embeddings.astype(np.float32)
 
