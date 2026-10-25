@@ -24,7 +24,13 @@ app = FastAPI()
 
 @app.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return {
+        "name": "Kaleido API",
+        "status": "running",
+        "message": "Load the Chrome extension on a news article to use Kaleido.",
+        "docs": "/docs",
+        "health": "/health",
+    }
 
 @app.get("/health")
 async def health():
