@@ -4,8 +4,7 @@ from fastapi.concurrency import run_in_threadpool
 
 from models import ArticleIn,ArticleNLPOut, RelatedArticle, RelatedArticlesOut
 from services.bias_lookup import get_outlet_bias
-from services.contrast_selector import select_contrasting
-from services.bias_classifier import classify_bias
+from services.retrieval import find_contrasting
 from services.article_processor import process_article_text
 from services.chunker import create_chunks
 from models import (
@@ -38,17 +37,12 @@ async def echo(article: ArticleIn):
 
 @app.post("/articles/related", response_model=RelatedArticlesOut)
 async def get_related_articles(article: ArticleIn):
-    fake_results = [
-        RelatedArticle(title="Example coverage from Outlet A", url="https://reuters.com/example", source="Reuters"),
-        RelatedArticle(title="Example coverage from Outlet B", url="https://foxnews.com/example", source="Fox News"),
-        RelatedArticle(title="Example coverage from Outlet C", url="https://theguardian.com/example", source="The Guardian"),
-    ]
-    for a in fake_results:
-        a.bias = get_outlet_bias(a.url)
-
-    curr_bias, curr_confidence = classify_bias(f"{article.title}. {article.description}")
-
-    results = select_contrasting(curr_bias=curr_bias, related_articles=fake_results)
+    try:
+        results = await run_in_threadpool(
+            find_contrasting, article.model_dump(), 5
+        )
+    except RuntimeError as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error
     return RelatedArticlesOut(related=results)
 @app.post(
     "/articles/process",

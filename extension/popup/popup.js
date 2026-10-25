@@ -2,12 +2,13 @@ const BASE_URL = 'http://localhost:8000';
 
 const statusEl = document.getElementById('status');
 const resultsEl = document.getElementById('results');
+const refreshEl = document.getElementById('refresh');
 
-async function fetchRelatedArticles({ url, title, description }) {
+async function fetchRelatedArticles({ url, title, description, content, published_at, publisher }) {
   const response = await fetch(`${BASE_URL}/articles/related`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ url, title, description }),
+    body: JSON.stringify({ url, title, description, content, published_at, publisher }),
   });
 
   if (!response.ok) {
@@ -18,6 +19,7 @@ async function fetchRelatedArticles({ url, title, description }) {
 }
 
 function renderEmpty(message) {
+  statusEl.dataset.state = 'empty';
   resultsEl.innerHTML = '';
   const li = document.createElement('li');
   li.className = 'empty';
@@ -26,6 +28,7 @@ function renderEmpty(message) {
 }
 
 function renderResults(articles) {
+  statusEl.dataset.state = 'results';
   resultsEl.innerHTML = '';
 
   articles.forEach((a) => {
@@ -60,29 +63,41 @@ function renderResults(articles) {
   });
 }
 
+function setLoading() {
+  statusEl.dataset.state = 'loading';
+  statusEl.textContent = 'Finding coverage from other perspectives…';
+  resultsEl.innerHTML = '<li class="loading" aria-label="Loading results"><span></span><span></span><span></span></li>';
+}
+
+async function load() {
+  setLoading();
+  chrome.runtime.sendMessage({ type: 'GET_CURRENT_ARTICLE' }, async (article) => {
+    if (chrome.runtime.lastError || !article) {
+      statusEl.dataset.state = 'empty';
+      statusEl.textContent = "No article detected on this page.";
+      renderEmpty('Open a news article, then try again.');
+      return;
+    }
+    statusEl.textContent = `Coverage for “${article.title}”`;
+    try {
+      const { related = [] } = await fetchRelatedArticles(article);
+      if (!related.length) {
+        renderEmpty('No contrasting coverage found yet.');
+        return;
+      }
+      renderResults(related);
+    } catch (error) {
+      statusEl.dataset.state = 'error';
+      statusEl.textContent = 'Kaleido is unavailable.';
+      renderEmpty('Start the local backend and try again.');
+      console.error(error);
+    }
+  });
+}
+
 function capitalize(word) {
   return word.charAt(0).toUpperCase() + word.slice(1);
 }
 
-// --- Entry point ---
-chrome.runtime.sendMessage({ type: 'GET_CURRENT_ARTICLE' }, async (article) => {
-  if (!article) {
-    statusEl.textContent = "This doesn't look like a news article.";
-    return;
-  }
-
-  statusEl.textContent = `Other coverage of "${article.title}"`;
-
-  try {
-    const { related } = await fetchRelatedArticles(article);
-    if (!related || related.length === 0) {
-      renderEmpty('No alternate coverage found yet.');
-      return;
-    }
-    renderResults(related);
-  } catch (err) {
-    statusEl.textContent = 'Reading the page…';
-    renderEmpty('Could not reach the backend. Is it running?');
-    console.error(err);
-  }
-});
+refreshEl.addEventListener('click', load);
+load();

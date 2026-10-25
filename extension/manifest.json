@@ -5,7 +5,7 @@
   "description": "Detects when you're reading a news article and shows related coverage with a different perspective.",
 
   "permissions": ["activeTab", "storage", "scripting"],
-  "host_permissions": ["http://localhost:8000/*"],
+  "host_permissions": ["http://localhost:8000/*", "http://127.0.0.1:8000/*"],
 
   "background": {
     "service_worker": "service-worker.js"

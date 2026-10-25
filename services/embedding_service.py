@@ -1,7 +1,6 @@
 from functools import lru_cache
 
 import numpy as np
-from sentence_transformers import SentenceTransformer
 
 
 EMBEDDING_MODEL_NAME = (
@@ -18,6 +17,7 @@ def get_embedding_model():
     Load the model once and reuse it.
     """
 
+    from sentence_transformers import SentenceTransformer
     model = SentenceTransformer(
         EMBEDDING_MODEL_NAME,
         device="cpu"

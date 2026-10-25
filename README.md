@@ -51,9 +51,12 @@ The newly implemented processing components are:
 
 ---
 
-## Status
+## Production-ready MVP
 
-This is a **work-in-progress learning project**.
+This MVP retrieves live related coverage without requiring a secret: it reads configurable RSS feeds,
+normalizes results into a local SQLite database, stores embedding vectors for article chunks, ranks
+coverage by cosine similarity, removes duplicate URLs, and filters out the current article's
+classified perspective.
 
 ### Implemented
 
@@ -61,19 +64,16 @@ This is a **work-in-progress learning project**.
 - ✅ Chrome Manifest V3 browser extension
 - ✅ Automatic news article detection and metadata extraction
 - ✅ Per-tab article storage through the background service worker
-- ✅ Extension popup connected to the backend
+- ✅ Extension popup connected to the backend with loading, empty, error, retry, and results states
 - ✅ Outlet-level bias lookup (`services/bias_lookup.py`)
 - ✅ Per-article political-leaning classification using a pretrained Hugging Face transformer model (`services/bias_classifier.py`)
 - ✅ Contrast-selection logic that filters out same-bias articles (`services/contrast_selector.py`)
 - ✅ Article processing pipeline (`services/article_processor.py`)
 - ✅ Sentence-aware text chunking (`services/chunker.py`)
-- ✅ Embedding generation (`services/embedding_service.py`)
-- ✅ Tokenizer/chunking tests
-
-### In Progress
-
-- 🟡 Semantic retrieval pipeline  
-  Article processing, chunking, and embedding generation are implemented, while persistent vector storage and complete retrieval are still being developed.
+- ✅ Embedding generation and durable local storage (`services/storage.py`)
+- ✅ Live RSS retrieval with an optional documented JSON API provider (`services/news_provider.py`)
+- ✅ Semantic retrieval and URL deduplication (`services/retrieval.py`)
+- ✅ Focused persistence/provider/retrieval tests
 
 ### Planned
 
@@ -99,6 +99,49 @@ Future development will extend the system to include:
 - More flexible political and perspective labels
 
 ---
+
+## Setup and commands
+
+Requires Python 3.12+, `uv`, and a Chrome-based browser.
+
+```powershell
+uv sync
+uv run python -m spacy download en_core_web_sm
+uv run uvicorn main:app --reload
+uv run pytest
+```
+
+The first request downloads `sentence-transformers/all-MiniLM-L6-v2` and
+`matous-volf/political-leaning-politics` from Hugging Face. Keep the backend
+running at `http://localhost:8000`, then load `extension/` at
+`chrome://extensions` with Developer mode and **Load unpacked**.
+
+### Retrieval configuration
+
+RSS is the default and needs no key:
+
+```powershell
+$env:RSS_FEEDS="https://feeds.bbci.co.uk/news/world/rss.xml,https://example.com/feed.xml"
+```
+
+An optional JSON provider can be selected when a service supports an
+`{"articles":[{"title","url","description","source","published_at"}]}` response:
+
+```powershell
+$env:NEWS_PROVIDER="api"
+$env:NEWS_API_URL="https://provider.example/search?q=..."
+$env:NEWS_API_KEY="do-not-commit-this"
+```
+
+For isolated local runs, set `KALEIDO_DB_PATH`; otherwise data is stored at
+`data/kaleido.sqlite3` (ignored by git).
+
+## MVP boundaries
+
+This release intentionally does not generate RAG summaries, claim Indian or
+multilingual classifier accuracy, or implement the full Chrome Side Panel.
+The classifier model is a U.S.-political/news baseline; RSS availability and
+publisher markup determine recall. No API key is required for the default path.
 
 ## Project Structure
 

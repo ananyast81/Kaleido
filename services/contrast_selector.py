@@ -1,10 +1,6 @@
-from models import RelatedArticlesOut
+from models import RelatedArticle
 
-def select_contrasting(curr_bias: str | None, related_articles: RelatedArticlesOut) -> RelatedArticlesOut:
+def select_contrasting(curr_bias: str | None, related_articles: list[RelatedArticle]) -> list[RelatedArticle]:
     if curr_bias is None:
         return related_articles
-    results = []
-    for article in related_articles:
-        if article.bias != curr_bias:
-            results.append(article)
-    return results
+    return [article for article in related_articles if article.bias != curr_bias]

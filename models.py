@@ -30,6 +30,8 @@ class RelatedArticle(BaseModel):
     source: str
     bias: str | None = None  # None is default
     confidence: float | None = None
+    similarity: float | None = None
+    published_at: str | None = None
 
 # Wrapper model
 class RelatedArticlesOut(BaseModel):
