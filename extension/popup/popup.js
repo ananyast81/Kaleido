@@ -42,21 +42,37 @@ function renderResults(articles) {
     link.href = a.url;
     link.target = '_blank';
 
-    link.innerHTML = `
-      <div class="result__top">
-        <span class="chip chip--${bias}">${capitalize(bias)}</span>
-        <span class="result__outlet">${a.source}</span>
-      </div>
-      <div class="result__title">${a.title}</div>
-      ${confidencePct != null ? `
-        <div class="confidence">
-          <div class="confidence__track">
-            <div class="confidence__fill confidence__fill--${bias}" style="width: ${confidencePct}%"></div>
-          </div>
-          <span class="confidence__label">${confidencePct}%</span>
-        </div>
-      ` : ''}
-    `;
+    const top = document.createElement('div');
+    top.className = 'result__top';
+    const chip = document.createElement('span');
+    chip.className = `chip chip--${bias}`;
+    chip.textContent = capitalize(bias);
+    const outlet = document.createElement('span');
+    outlet.className = 'result__outlet';
+    outlet.textContent = a.source || 'Unknown source';
+    top.append(chip, outlet);
+
+    const title = document.createElement('div');
+    title.className = 'result__title';
+    title.textContent = a.title || 'Untitled article';
+    link.appendChild(top);
+    link.appendChild(title);
+
+    if (confidencePct != null) {
+      const confidence = document.createElement('div');
+      confidence.className = 'confidence';
+      const track = document.createElement('div');
+      track.className = 'confidence__track';
+      const fill = document.createElement('div');
+      fill.className = `confidence__fill confidence__fill--${bias}`;
+      fill.style.width = `${confidencePct}%`;
+      track.appendChild(fill);
+      const label = document.createElement('span');
+      label.className = 'confidence__label';
+      label.textContent = `${confidencePct}%`;
+      confidence.append(track, label);
+      link.appendChild(confidence);
+    }
 
     li.appendChild(link);
     resultsEl.appendChild(li);
